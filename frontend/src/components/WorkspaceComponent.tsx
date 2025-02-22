@@ -8,17 +8,13 @@ const WorkspaceComponent: React.FC = () => {
   const [editContent, setEditContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  // Add these functions to WorkspaceComponent.tsx
 
-
-
-  // Start editing a step
   const handleStartEdit = (step: SequenceStep) => {
     setEditingStepId(step.id);
     setEditContent(step.content);
   };
 
-  // Save edits to a step
+ 
   const handleSaveEdit = () => {
     if (editingStepId) {
       updateSequenceStep(editingStepId, editContent);
@@ -26,12 +22,12 @@ const WorkspaceComponent: React.FC = () => {
     }
   };
 
-  // Cancel editing
+
   const handleCancelEdit = () => {
     setEditingStepId(null);
   };
   
-  // Handle saving sequence to database
+
   const handleSaveSequence = async () => {
     setIsSaving(true);
     try {
@@ -41,7 +37,7 @@ const WorkspaceComponent: React.FC = () => {
     }
   };
 
-    // Add a new step function
+
     const handleAddStep = () => {
       if (!sequence) return;
       
@@ -55,7 +51,7 @@ const WorkspaceComponent: React.FC = () => {
       
       const updatedSteps = [...sequence.steps, newStep];
       
-      // Use the context's updateSequence function
+
       updateSequence({
         ...sequence,
         steps: updatedSteps,
@@ -63,7 +59,7 @@ const WorkspaceComponent: React.FC = () => {
       });
     };
 
-  // Render a sequence step
+
   const renderSequenceStep = (step: SequenceStep) => {
     const isEditing = editingStepId === step.id;
     

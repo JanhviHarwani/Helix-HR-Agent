@@ -1,4 +1,3 @@
-// Create a new component: src/components/SavedSequencesPanel.tsx
 import React, { useEffect, useState } from 'react';
 import { Sequence, SequenceStep, useAppContext } from '../context/AppContext';
 import apiService from '../services/api';

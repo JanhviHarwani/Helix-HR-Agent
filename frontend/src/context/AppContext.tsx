@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/api';
 
-// Define types
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -26,7 +25,6 @@ export interface Sequence {
 
 interface AppContextType {
   // User state
-  
   userId: number | null;
   
   // Chat state
@@ -88,14 +86,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Initialize app
+  // Initializing app
   useEffect(() => {
     const initApp = async () => {
       try {
-        // Check if backend is available
+        // Checking if backend is available
         await apiService.checkHealth();
         
-        // Add welcome message
+        // Added welcome message
         const welcomeMessage: Message = {
           id: Date.now().toString(),
           role: 'assistant',

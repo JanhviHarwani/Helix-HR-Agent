@@ -1,4 +1,3 @@
-// src/components/SessionManager.tsx
 import React, { useEffect, useState } from 'react';
 import { useAppContext } from '../context/AppContext';
 import apiService, { SessionInfo } from '../services/api';

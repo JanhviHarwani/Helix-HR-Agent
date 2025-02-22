@@ -118,6 +118,7 @@ addMessage: async (sessionId: number, role: string, content: string) => {
   return response.data;
 },
 
+
 getSessionMessages: async (sessionId: number) => {
   try {
     const response = await axiosInstance.get(`/api/chat/history/${sessionId}`);
