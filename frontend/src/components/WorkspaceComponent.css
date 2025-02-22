@@ -1,0 +1,228 @@
+/* Workspace container */
+.workspace-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Workspace header */
+.workspace-header {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-light);
+}
+
+.workspace-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+/* Sequence container */
+.sequence-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: var(--bg-color);
+}
+
+/* Empty workspace state */
+.workspace-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--text-light);
+  padding: 2rem;
+}
+
+.workspace-empty p {
+  margin-bottom: 0.5rem;
+}
+
+/* Sequence step styling */
+.sequence-step {
+  background-color: var(--bg-light);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  /* overflow: hidden; */
+  transition: box-shadow 0.2s;
+}
+
+.sequence-step:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.step-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-dark);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.step-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.edit-button {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--text-color);
+  transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+  background-color: var(--bg-light);
+}
+
+.step-content {
+  padding: 1rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.step-content-main {
+  margin-bottom: 0.75rem;
+}
+
+.step-strategy {
+  padding: 0.75rem;
+  background-color: rgba(99, 102, 241, 0.05);
+  border-radius: 0.25rem;
+  font-size: 0.9rem;
+  border-left: 3px solid var(--primary-color);
+}
+
+.strategy-label {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Step editing */
+.step-edit-container {
+  padding: 1rem;
+}
+
+.step-edit-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  font-family: inherit;
+  font-size: inherit;
+  resize: vertical;
+  margin-bottom: 0.75rem;
+}
+
+.step-edit-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.step-edit-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.step-edit-actions button {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.step-edit-actions button:first-child {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.step-edit-actions button:first-child:hover {
+  background-color: var(--primary-dark);
+}
+
+.step-edit-actions button:last-child {
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+}
+
+.step-edit-actions button:last-child:hover {
+  background-color: var(--bg-dark);
+}
+
+/* Workspace footer */
+.workspace-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sequence-updated {
+  font-size: 0.875rem;
+  color: var(--text-light);
+}
+
+.workspace-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.add-step-button, .save-sequence-button {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-step-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+}
+
+.add-step-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.add-step-button::before {
+  content: "+";
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.save-sequence-button {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+}
+
+.save-sequence-button:hover {
+  background-color: #e29000;
+}
+
+.save-sequence-button:disabled {
+  background-color: var(--text-light);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
