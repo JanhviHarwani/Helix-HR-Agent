@@ -60,6 +60,17 @@ button {
   flex: 1;
   overflow: hidden;
 }
+.app-sidebar {
+  width: 300px;
+  border-right: 1px solid var(--border-color);
+  background-color: var(--bg-light);
+  overflow-y: auto;
+}
+.app-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
 
 /* Left panel (Chat) */
 .app-left-panel {
@@ -93,15 +104,6 @@ button {
   .app-right-panel {
     height: 50%;
   }
-}
-/* App.css - add this */
-.app-sidebar {
-  width: 250px;
-  border-right: 1px solid var(--border-color);
-  background-color: var(--bg-light);
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
 }
 
 /* Adjust the layout */

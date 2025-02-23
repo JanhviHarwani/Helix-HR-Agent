@@ -32,71 +32,110 @@ def home():
 def generate_sequence():
     data = request.json
     user_prompt = data.get("message", "")
+    conversation_context = data.get("context", [])  # Get conversation history
 
     if not user_prompt:
         return jsonify({"error": "No input provided"}), 400
 
-    # Enhance the prompt to get structured output
-    enhanced_prompt = f"""
-    Create a structured outreach sequence based on the following request: "{user_prompt}"
+    # Enhanced system prompt for better conversation flow
+    system_prompt = """
+    You are Helix, an AI recruiting assistant designed to help create effective outreach sequences. 
+    Be conversational and proactive in gathering information.
     
-    The sequence should have 3 steps and include a title.
+    When starting a new sequence:
+    1. Ask about specific details of the target role and candidate profile
+    2. Inquire about unique selling points of the company
+    3. Understand desired outcomes (interview, phone call, etc.)
+    4. Confirm communication style preferences
     
-    For each step, include:
-    - What content to include in the outreach
-    - What strategy this step fulfills
+    Only generate a sequence when you have sufficient information about:
+    - Role specifics
+    - Target candidate profile
+    - Company value proposition
+    - Desired outcome
     
-    Format your response as a JSON object with this structure:
-    {{
-      "title": "Title of the sequence",
+    When you have enough information, generate a sequence with:
+    - 3-5 personalized steps
+    - Clear strategy for each step
+    - Specific call to action
+    
+    Format your sequence as JSON:
+    {
+      "title": "Title of sequence",
       "steps": [
-        {{
-          "Step 1": {{
-            "Content": "Content for step 1",
-            "Strategy": "Strategy for step 1"
-          }}
-        }},
-        {{
-          "Step 2": {{
-            "Content": "Content for step 2",
-            "Strategy": "Strategy for step 2"
-          }}
-        }},
-        {{
-          "Step 3": {{
-            "Content": "Content for step 3",
-            "Strategy": "Strategy for step 3"
-          }}
-        }}
+        {
+          "Step 1": {
+            "Content": "Actual message content",
+            "Strategy": "Strategic goal of this step"
+          }
+        },
+        {
+          "Step 2": {
+            "Content": "Actual message content",
+            "Strategy": "Strategic goal of this step"
+          }
+        }
       ]
-    }}
-    
-    Make sure the output is valid JSON.
+    }
+
+    If you don't have enough information, ask follow-up questions instead of generating a sequence.
     """
 
     try:
+        # Build the message list for the conversation
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add conversation history
+        for msg in conversation_context:
+            messages.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+        
+        # Add the current user message
+        messages.append({"role": "user", "content": user_prompt})
+        
+        # Get response from OpenAI
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": enhanced_prompt}]
+            messages=messages
         )
         ai_response = response.choices[0].message.content
 
-        # Try to extract JSON from the response
-        try:
-            # Find JSON object in response using regex (handles cases where there might be extra text)
+        # Check if the response contains a sequence
+        if "json" in ai_response.lower() or ai_response.strip().startswith("{"):
+            # Try to extract JSON from the response
             json_match = re.search(r'({[\s\S]*})', ai_response)
             if json_match:
-                json_str = json_match.group(1)
-                parsed_json = json.loads(json_str)
-                return jsonify({"response": ai_response, "json": parsed_json})
-            else:
-                return jsonify({"response": ai_response})
-        except json.JSONDecodeError:
-            return jsonify({"response": ai_response})
+                try:
+                    json_str = json_match.group(1)
+                    parsed_json = json.loads(json_str)
+                    
+                    # Validate JSON structure
+                    if "title" in parsed_json and "steps" in parsed_json:
+                        return jsonify({
+                            "response": "I've created a sequence based on our discussion.",
+                            "type": "sequence",
+                            "json": parsed_json
+                        })
+                except json.JSONDecodeError:
+                    # If JSON parsing fails, treat as normal message
+                    return jsonify({
+                        "response": ai_response,
+                        "type": "message"
+                    })
+        
+        # If no valid sequence found, return as normal message
+        return jsonify({
+            "response": ai_response,
+            "type": "message"
+        })
             
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+        print(f"Error in generate_sequence: {str(e)}")  # Log the error
+        return jsonify({
+            "error": f"Failed to generate sequence: {str(e)}"
+        }), 500
 # API Endpoint to store generated sequences in PostgreSQL
 @app.route('/save_sequence', methods=['POST'])
 def save_sequence():

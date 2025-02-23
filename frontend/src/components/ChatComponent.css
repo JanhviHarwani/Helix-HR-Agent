@@ -1,9 +1,21 @@
 /* Chat container */
 .chat-container {
-    display: flex;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-color);
+  min-width: 400px;
+}
+@media (max-width: 1024px) {
+  .app-content {
     flex-direction: column;
-    height: 100%;
   }
+  
+  .chat-container,
+  .workspace-container {
+    min-width: unset;
+  }
+}
   
   /* Chat header */
   .chat-header {

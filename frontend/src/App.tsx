@@ -5,6 +5,7 @@ import { AppProvider, useAppContext } from './context/AppContext';
 import './App.css';
 import SessionManager from './components/SessionManager';
 import SavedSequencesPanel from './components/SavedSequencesPanel';
+import SidebarComponent from './components/SidebarComponent';
 
 // Loading component
 const LoadingScreen: React.FC = () => (
@@ -43,13 +44,10 @@ const AppContent: React.FC = () => {
       </header>
       <main className="app-main">
         <div className="app-sidebar">
-          <SessionManager />
-          <SavedSequencesPanel />
+          <SidebarComponent />
         </div>
-        <div className="app-left-panel">
+        <div className="app-content">
           <ChatComponent />
-        </div>
-        <div className="app-right-panel">
           <WorkspaceComponent />
         </div>
       </main>

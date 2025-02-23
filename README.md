@@ -42,7 +42,7 @@ tasks remaining:
 - make UI better
 - as soon as the sequence gets saved should show it under saved refresh issue
 - saved sequence should be saved with the title
-- Too many api calls in the first render
+
 
 User Checklist:
 [ ]  User should be able to chat ‘back and forth’ with the AI

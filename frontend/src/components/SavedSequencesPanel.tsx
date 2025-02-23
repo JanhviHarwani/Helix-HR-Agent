@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,forwardRef, useImperativeHandle } from 'react';
 import { Sequence, SequenceStep, useAppContext } from '../context/AppContext';
 import apiService from '../services/api';
 import './SavedSequencesPanel.css';
@@ -7,17 +7,20 @@ interface SavedSequence {
   id: number;
   text: string;
 }
+export interface SavedSequencesPanelRef {
+  loadSequences: () => void;
+}
 
-const SavedSequencesPanel: React.FC = () => {
-  const { userId,updateSequence } = useAppContext();
+const SavedSequencesPanel= forwardRef<SavedSequencesPanelRef>((props, ref) => {
+  const { userId,updateSequence,loadedStates, setLoadedState } = useAppContext();
   const [sequences, setSequences] = useState<SavedSequence[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
   useEffect(() => {
-    if (userId) {
+    if (!loadedStates.sequences) {
       loadSequences();
     }
-  }, [userId]);
+  }, [loadedStates.sequences]);
   
   const loadSequences = async () => {
     if (!userId) return;
@@ -26,13 +29,20 @@ const SavedSequencesPanel: React.FC = () => {
     try {
       const data = await apiService.getSequences(userId);
       setSequences(data);
+      setLoadedState('sequences', true);
     } catch (error) {
       console.error('Error loading sequences:', error);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  useImperativeHandle(ref, () => ({
+    loadSequences: () => {
+      setLoadedState('sequences', false); // Reset loaded state to trigger reload
+      loadSequences();
+    }
+  }));
   const handleLoadSequence = (sequence: SavedSequence) => {
     // Parse the sequence text into steps
     const lines = sequence.text.split('\n\n');
@@ -117,6 +127,6 @@ const SavedSequencesPanel: React.FC = () => {
       </ul>
     </div>
   );
-};
+});
 
 export default SavedSequencesPanel;

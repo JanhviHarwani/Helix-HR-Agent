@@ -3,7 +3,7 @@ import { useAppContext, SequenceStep } from '../context/AppContext';
 import './WorkspaceComponent.css';
 
 const WorkspaceComponent: React.FC = () => {
-  const { sequence, updateSequenceStep, saveSequence, updateSequence } = useAppContext();
+  const { sequence, updateSequenceStep, saveSequence, updateSequence, addMessage } = useAppContext();
   const [editingStepId, setEditingStepId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -37,6 +37,17 @@ const WorkspaceComponent: React.FC = () => {
     }
   };
 
+  const handleRequestEdit = () => {
+    if (!sequence) return;
+    
+    // Create a prompt describing the current sequence
+    const sequenceDescription = sequence.steps
+      .map(step => `Step ${step.stepNumber}: ${step.content}`)
+      .join('\n\n');
+      
+    // Ask AI for suggestions
+    addMessage('user', `Can you suggest improvements for this sequence?\n\n${sequenceDescription}`);
+  };
 
     const handleAddStep = () => {
       if (!sequence) return;
@@ -141,6 +152,12 @@ const WorkspaceComponent: React.FC = () => {
           Last updated: {sequence.updatedAt.toLocaleString()}
         </p>
         <div className="workspace-actions">
+        <button 
+            className="edit-request-button"
+            onClick={handleRequestEdit}
+          >
+            Ask AI for Suggestions
+          </button>
           <button 
             className="save-sequence-button"
             onClick={handleSaveSequence}

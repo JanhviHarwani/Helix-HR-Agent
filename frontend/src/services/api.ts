@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Message } from '../context/AppContext';
 
 const API_URL = 'http://127.0.0.1:5000';
 
@@ -28,10 +29,8 @@ export interface GenerateSequenceRequest {
 
 export interface GenerateSequenceResponse {
   response: string;
-  json?: {
-    title: string;
-    steps: any[];
-  };
+  type?: 'sequence' | 'message';
+  json?: any;
 }
 
 // Types for saving sequence
@@ -58,15 +57,7 @@ const apiService = {
     return response.data;
   },
   
-  // Generate a sequence
-  generateSequence: async (message: string) => {
-    const response = await axiosInstance.post<GenerateSequenceResponse>(
-      `/generate_sequence`,
-      { message }
-    );
-    return response.data;
-  },
-  
+
   // Save a sequence
   saveSequence: async (userId: number, sequenceText: string) => {
     const response = await axiosInstance.post(
@@ -127,7 +118,22 @@ getSessionMessages: async (sessionId: number) => {
     console.error("Error fetching messages:", error);
     return [];
   }
-}
+},
+
+generateSequence: async (message: string, messages: Message[]): Promise<GenerateSequenceResponse> => {
+  const response = await axiosInstance.post<GenerateSequenceResponse>(
+    `/generate_sequence`,
+    { 
+      message,
+      context: messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+    }
+  );
+  return response.data;
+},
+
 };
 
 export default apiService;

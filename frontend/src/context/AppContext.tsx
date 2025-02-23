@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import apiService from '../services/api';
+import apiService, { GenerateSequenceResponse } from '../services/api';
+
 
 export interface Message {
   id: string;
@@ -22,6 +23,16 @@ export interface Sequence {
   createdAt: Date;
   updatedAt: Date;
 }
+const DEFAULT_LOADED_STATES = {
+  sessions: false,
+  sequences: false
+};
+interface ConversationContext {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// Add to AppContextType
 
 interface AppContextType {
   // User state
@@ -45,6 +56,12 @@ interface AppContextType {
   updateSequence: (updatedSequence: Sequence) => void;  
   activeSessionId: number | null;
   setActiveSession: (sessionId: number) => Promise<void>;
+  loadedStates: {
+    sessions: boolean;
+    sequences: boolean;
+  };
+  setLoadedState: (key: 'sessions' | 'sequences', value: boolean) => void;
+  conversationContext: ConversationContext[];
 }
 
 // Create context with default values
@@ -64,7 +81,10 @@ const AppContext = createContext<AppContextType>({
   error: null,
   updateSequence:()=>{},
   activeSessionId: null,
-  setActiveSession: async () => Promise.resolve()
+  setActiveSession: async () => Promise.resolve(),
+  loadedStates: DEFAULT_LOADED_STATES,
+  setLoadedState: () => {}, 
+  conversationContext: [] as ConversationContext[],
 });
 
 // Custom hook for using the context
@@ -78,14 +98,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Chat state
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
-  
+  const [conversationContext, setConversationContext] = useState<ConversationContext[]>([]);
+
   // Sequence state
   const [sequence, setSequenceState] = useState<Sequence | null>(null);
   
   // Init state
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [loadedStates, setLoadedStates] = useState(DEFAULT_LOADED_STATES);
+
+  const setLoadedState = (key: 'sessions' | 'sequences', value: boolean) => {
+    setLoadedStates(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
   // Initializing app
   useEffect(() => {
     const initApp = async () => {
@@ -187,82 +215,60 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
   
-// In your handleUserMessage function in AppContext.tsx
-const handleUserMessage = async (content: string) => {
-  setIsProcessing(true);
-  
-  try {
-    // Generate response from backend
-    const response = await apiService.generateSequence(content);
+  const handleUserMessage = async (content: string) => {
+    setIsProcessing(true);
     
-    // Check if response looks like JSON
-    let displayMessage = response.response;
-    if (response.response.trim().startsWith('{')) {
-      try {
-        const jsonData = JSON.parse(response.response);
-        
-        // Create a user-friendly message instead of showing raw JSON
-        displayMessage = `I've created a "${jsonData.title}" sequence with ${jsonData.steps.length} steps. You can view and edit it in the workspace panel.`;
-        
-        // Create sequence from parsed JSON
-        if (jsonData.title && jsonData.steps) {
-          const sequenceSteps = jsonData.steps.map((step: any, index: number) => {
-            let content = '';
-            const stepKey = `Step ${index + 1}`;
-            
-            if (step[stepKey]) {
-              const stepContent = step[stepKey].Content || '';
-              const stepStrategy = step[stepKey].Strategy || '';
-              
-              content = stepContent;
-              if (stepStrategy) {
-                content += `\nStrategy: ${stepStrategy}`;
-              }
-            }
-            
-            return {
-              id: `step_${index + 1}`,
-              stepNumber: index + 1,
-              content: content,
-              editable: true
-            };
-          });
-          
-          const newSequence: Sequence = {
-            id: 'local',
-            title: jsonData.title,
-            steps: sequenceSteps,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-          
-          // This is the key line - it updates the sequence in the workspace
+    try {
+      const response = await apiService.generateSequence(content, messages);
+      
+      // Check if response contains JSON sequence data
+      const jsonMatch = response.response.match(/```json\s*({[\s\S]*?})\s*```|{[\s\S]*}/);
+      if (jsonMatch) {
+        try {
+          const jsonData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+          // Create sequence from JSON
+          const newSequence = createSequenceFromJson(jsonData);
           setSequence(newSequence);
+          
+          // Add friendly message about sequence creation
+          const aiMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: 'I\'ve created a sequence based on our discussion. You can view and edit it in the workspace. Would you like me to make any adjustments?',
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, aiMessage]);
+        } catch (jsonError) {
+          console.error("Error parsing JSON:", jsonError);
+          // If JSON parsing fails, treat as normal message
+          const aiMessage: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: response.response,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, aiMessage]);
         }
-      } catch (jsonError) {
-        console.error("Error parsing JSON from response:", jsonError);
+      } else {
+        // Handle normal conversation messages
+        const aiMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: response.response,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, aiMessage]);
       }
+    } catch (err) {
+      console.error('Error processing message:', err);
+      // Error handling...
+    } finally {
+      setIsProcessing(false);
     }
-    
-    // Add AI response to messages with the friendly message
-    const aiMessage: Message = {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: displayMessage,
-      timestamp: new Date(),
-    };
-    
-    setMessages((prevMessages) => [...prevMessages, aiMessage]);
-  } catch (err) {
-    console.error('Error processing message:', err);
-    // Error handling code...
-  } finally {
-    setIsProcessing(false);
-  }
-};
+  };
 
 // Function to create a sequence from JSON response
-const createSequenceFromJson = (json: any) => {
+const createSequenceFromJson = (json: any): Sequence => {  // Add return type
   try {
     // Format steps
     const sequenceSteps: SequenceStep[] = json.steps.map((step: any, index: number) => {
@@ -287,7 +293,8 @@ const createSequenceFromJson = (json: any) => {
       };
     });
     
-    const newSequence: Sequence = {
+    // Create and return the sequence instead of setting state
+    return {
       id: 'local',
       title: json.title || 'Sales Outreach Sequence',
       steps: sequenceSteps,
@@ -295,22 +302,21 @@ const createSequenceFromJson = (json: any) => {
       updatedAt: new Date(),
     };
     
-    setSequence(newSequence);
-    
-    // Add message about sequence creation
-    const aiMessage: Message = {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: 'I\'ve created a sales outreach sequence based on our conversation. You can view and edit it in the workspace.',
-      timestamp: new Date(),
-    };
-    
-    setMessages((prevMessages) => [...prevMessages, aiMessage]);
   } catch (error) {
     console.error("Error creating sequence from JSON:", error);
-    
-    // Fall back to text parsing
-    createSequenceFromResponse(JSON.stringify(json));
+    // Return a default sequence if there's an error
+    return {
+      id: 'local',
+      title: 'Error Creating Sequence',
+      steps: [{
+        id: 'step_1',
+        stepNumber: 1,
+        content: 'Error creating sequence from JSON',
+        editable: true
+      }],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
   }
 };
   
@@ -555,6 +561,9 @@ const createSequenceFromResponse = (response: string) => {
     updateSequence,
     isInitialized,
     error,
+    loadedStates,
+    setLoadedState,
+    conversationContext: []
   };
   
   return (

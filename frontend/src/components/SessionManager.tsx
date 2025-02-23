@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,forwardRef, useImperativeHandle } from 'react';
 import { useAppContext } from '../context/AppContext';
 import apiService, { SessionInfo } from '../services/api';
 import './SessionManager.css';
 
+export interface SessionManagerRef {
+  loadSessions: () => void;
+}
 
-
-const SessionManager: React.FC = () => {
-  const { userId, activeSessionId, setActiveSession } = useAppContext();
+const SessionManager= forwardRef<SessionManagerRef>((props, ref)  => {
+  const { userId, activeSessionId, setActiveSession, loadedStates, setLoadedState  } = useAppContext();
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [newSessionTitle, setNewSessionTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   useEffect(() => {
-    if (userId) {
+    if (!loadedStates.sessions) {
       loadSessions();
     }
-  }, [userId]);
+  }, [loadedStates.sessions]);
   
   const loadSessions = async () => {
     if (!userId) return;
@@ -24,18 +26,19 @@ const SessionManager: React.FC = () => {
     try {
       const data = await apiService.getSessions(userId);
       setSessions(data);
-      
-      // If no active session, set the first one
-      if (data.length > 0 && !activeSessionId) {
-        setActiveSession(data[0].id);
-      }
+      setLoadedState('sessions', true);
     } catch (error) {
       console.error('Error loading sessions:', error);
     } finally {
       setIsLoading(false);
     }
   };
-  
+
+  useImperativeHandle(ref, () => ({
+    loadSessions
+  }));
+
+
   const handleCreateSession = async () => {
     if (!userId) return;
     
@@ -84,6 +87,6 @@ const SessionManager: React.FC = () => {
       </ul>
     </div>
   );
-};
+});
 
 export default SessionManager;
